@@ -1,47 +1,35 @@
 <?php
-// Include database connection and start session
-require_once 'db.php';
+include 'header.php';
+include 'db.php';
 
-// If an ID is passed via GET, add it to the cart
-if (isset($_GET['id'])) {
-    $id = intval($_GET['id']); // sanitize input
-    $_SESSION['cart'][] = $id;
-
-    // Redirect to the same page to prevent resubmission
-    header("Location: cart.php");
-    exit();
+if(!isset($_SESSION['cart'])){
+    $_SESSION['cart'] = [];
 }
-?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Your Cart</title>
-</head>
-<body>
+if(isset($_GET['add'])){
+    $product_id = $_GET['add'];
 
-<h2>Your Cart</h2>
+    $result = $conn->query("SELECT * FROM products WHERE id=$product_id");
+    $product = $result->fetch_assoc();
 
-<?php
-if (!empty($_SESSION['cart'])) {
-    echo "<ul>";
-    foreach ($_SESSION['cart'] as $id) {
-        $product_result = $conn->query("SELECT * FROM products WHERE id=$id");
-
-        if ($product_result && $product = $product_result->fetch_assoc()) {
-            echo "<li>{$product['name']} - R{$product['price']}</li>";
-        } else {
-            echo "<li>Product not found (ID: $id)</li>";
-        }
-    }
-    echo "</ul>";
-} else {
-    echo "<p>Your cart is empty. Why not go back and add something to it?</p>";
+    $_SESSION['cart'][] = $product;
 }
+
+echo "<div class='container'>";
+echo "<h2>Your Cart</h2>";
+
+$total = 0;
+
+foreach($_SESSION['cart'] as $item){
+    echo "<p>".$item['name']." - R".$item['price']."</p>";
+    $total += $item['price'];
+}
+
+echo "<p><strong>Total: R$total</strong></p>";
+
+if($total > 0){
+    echo "<a class='button' href='checkout.php'>Checkout</a>";
+}
+
+echo "</div>";
 ?>
-
-<p><a href="index.html">Back to Products</a></p>
-
-</body>
-</html>
